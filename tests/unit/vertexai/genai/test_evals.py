@@ -53,6 +53,47 @@ _evals_utils = _genai._evals_utils
 pytestmark = pytest.mark.usefixtures("google_auth_mock")
 
 
+class TestDropEmptyColumns:
+    """Unit tests for the _drop_empty_columns function."""
+
+    def test_drop_empty_columns(self):
+        df = pd.DataFrame(
+            {
+                "col1": [1, 2, 3],
+                "col2": [None, None, None],
+                "col3": [[], [], []],
+                "col4": [{}, {}, {}],
+                "col5": [1, None, []],
+            }
+        )
+        result_df = _evals_common._drop_empty_columns(df)
+        assert "col1" in result_df.columns
+        assert "col2" not in result_df.columns
+        assert "col3" not in result_df.columns
+        assert "col4" not in result_df.columns
+        assert "col5" in result_df.columns
+
+    def test_drop_empty_columns_all_empty(self):
+        df = pd.DataFrame(
+            {
+                "col1": [None, None, None],
+                "col2": [[], [], []],
+            }
+        )
+        result_df = _evals_common._drop_empty_columns(df)
+        assert result_df.empty
+
+    def test_drop_empty_columns_none_empty(self):
+        df = pd.DataFrame(
+            {
+                "col1": [1, 2, 3],
+                "col2": ["a", "b", "c"],
+            }
+        )
+        result_df = _evals_common._drop_empty_columns(df)
+        assert list(result_df.columns) == ["col1", "col2"]
+
+
 def _create_content_dump(text: str) -> dict[str, list[genai_types.Content]]:
     return {
         "contents": [
